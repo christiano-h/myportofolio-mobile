@@ -41,6 +41,8 @@ Saya menggunakan Flutter SDK dengan versi Dart yang sesuai `pubspec.yaml`, yaitu
 
 - **Tutorial 08** — Membuat proyek Flutter, memisahkan halaman utama ke `lib/menu.dart`, menggunakan `StatelessWidget`, serta menyusun `InfoCard` dan `ItemCard`.
 - **Tugas 7** — Mengisi identitas pribadi dan membuat tombol Lihat Proyek, Tambah Proyek, serta Logout dengan warna biru, hijau, dan merah. Setiap tombol menampilkan SnackBar sesuai nama tombol yang ditekan.
+- **Tutorial 09** — Menerapkan navigasi `LeftDrawer` dan membuat formulir tambah proyek (`project_form.dart`) menggunakan `StatefulWidget`, `Form`, dan `GlobalKey<FormState>`.
+- **Tugas 8** — Membuat formulir baru Pengalaman (`experience_form.dart`) sesuai model `Experience` Django, menambahkan kartu aksi "Tambah Pengalaman" di beranda via `Navigator.push()`, menambahkan opsi menu drawer bersama via `Navigator.pushReplacement()`, menerapkan validasi input dan `showDatePicker()`, serta menampilkan dialog ringkasan via `AlertDialog`.
 
 ---
 
@@ -116,3 +118,49 @@ Saya menggunakan Flutter SDK dengan versi Dart yang sesuai `pubspec.yaml`, yaitu
    **Full restart** menghentikan lalu menjalankan aplikasi kembali, termasuk membangun ulang kode native. Ini diperlukan setelah mengubah kode Kotlin, Java, Swift, atau Objective-C, serta menambah plugin yang membawa kode native.
 
 > AI disclosure : [ristek.link/AI-DISCLOSURE-PBP](https://ristek.link/AI-DISCLOSURE-PBP)
+
+---
+
+### Tugas 8
+
+1. **Jelaskan perbedaan antara `Navigator.push()`, `Navigator.pushReplacement()`, dan `Navigator.pop()`. Metode apa yang digunakan untuk membuka formulir dari kartu aksi? Jelaskan juga bagaimana opsi Home di drawer membawa pengguna kembali ke halaman utama.**
+
+   * **`Navigator.push()`**: Menambahkan (*push*) sebuah *route* halaman baru ke puncak tumpukan (*stack*) navigasi di atas halaman saat ini. Halaman sebelumnya tetap tersimpan di dalam memori dan riwayat tumpukan, sehingga pengguna dapat kembali ke halaman sebelumnya menggunakan tombol kembali (*back button*) bawaan perangkat atau tombol panah pada AppBar. Metode ini digunakan saat **membuka formulir dari kartu aksi di halaman utama** agar pengguna mudah kembali ke menu utama setelah selesai atau batal mengisi formulir.
+   * **`Navigator.pushReplacement()`**: Mengganti (*replace*) halaman yang sedang aktif di puncak *stack* dengan halaman baru tanpa menambah kedalaman tumpukan riwayat. Halaman sebelumnya langsung dihancurkan (*disposed*) dari *stack*. Metode ini sangat ideal digunakan untuk menu navigasi samping (**Drawer**), seperti saat berpindah dari halaman formulir ke halaman formulir lainnya atau ke beranda, guna mencegah penumpukan halaman yang tidak berkesudahan (*infinite stacking loop*).
+   * **`Navigator.pop()`**: Menghapus (*pop*) halaman atau modal yang berada di posisi paling atas dari *stack* navigasi dan menampilkan kembali halaman di bawahnya. Metode ini digunakan untuk menutup modal pop-up, seperti menutup `AlertDialog` ringkasan data setelah pengguna menekan tombol "OK".
+   * **Opsi Home di Drawer**: Membawa pengguna kembali ke halaman utama dengan memanggil `Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHomePage()))`. Dengan mengganti rute aktif secara langsung, aplikasi tidak menumpuk halaman beranda baru di atas halaman formulir, melainkan mereset tampilan kembali ke menu utama secara bersih. Ini juga memungkinkan pengguna di peramban (Chrome) berpindah kembali ke beranda dengan lancar tanpa bergantung pada riwayat *browser back*.
+
+2. **Bagaimana susunan `Scaffold`, `AppBar`, dan `Drawer` membantu menjaga struktur halaman tetap konsisten? Berikan satu contoh penggunaan warna tema portofolio di lebih dari satu halaman.**
+
+   * **Susunan `Scaffold`, `AppBar`, dan `Drawer`**: `Scaffold` bertindak sebagai kerangka visual dasar standar Material Design yang menyediakan slot tata letak terstruktur, seperti bagian atas (`appBar`), menu samping (`drawer`), dan area konten utama (`body`). Dengan menggunakan komponen `AppBar` dan `Drawer` yang seragam di seluruh halaman (`MyHomePage`, `ProjectFormPage`, dan `ExperienceFormPage`), pengguna disajikan hierarki visual, posisi tombol menu, dan alur navigasi global yang konsisten di mana pun mereka berada di dalam aplikasi.
+   * **Contoh Penggunaan Warna Tema**: Warna tema utama `Colors.indigo` (atau `Theme.of(context).colorScheme.primary`) diaplikasikan secara konsisten di beberapa halaman:
+     1. Pada `AppBar` di halaman beranda (`menu.dart`), halaman formulir proyek (`project_form.dart`), dan formulir pengalaman (`experience_form.dart`).
+     2. Pada latar belakang `DrawerHeader` di widget bersama `left_drawer.dart`.
+     3. Pada tombol aksi simpan (`ElevatedButton`) di kedua formulir portofolio.
+
+3. **Mengapa tata letak tersebut dipilih untuk formulir? Jelaskan peran widget pengatur jarak dan widget penggulir ketika ruang layar terbatas.**
+
+   * **Alasan Pemilihan Tata Letak Formulir**: Tata letak vertikal berbasis `Column` dipilih karena proses pengisian formulir bersifat sekuensial dari atas ke bawah. Setiap field masukan diberikan ruang yang jelas lengkap dengan label, *hint text*, dan ikon penanda jenis data.
+   * **Peran Widget Pengatur Jarak (`Padding` dan `SizedBox`)**: Memberikan ruang bernapas (*whitespace*) yang proporsional antar-elemen input sehingga antarmuka tidak terasa padat, batas ketukan jari (*touch target*) menjadi cukup lebar, serta memisahkan letak tombol simpan dari elemen input terakhir.
+   * **Peran Widget Penggulir (`SingleChildScrollView`)**: Sangat krusial saat formulir dibuka pada perangkat berlayar sempit atau saat papan ketik virtual (*soft keyboard*) muncul di layar. Papan ketik memakan lebih dari 40% tinggi layar efektif; tanpa `SingleChildScrollView`, area yang tersisa akan memicu galat visual kuning-hitam garis belang (*RenderFlex overflowed by X pixels*). Dengan widget ini, seluruh input dan tombol Simpan tetap dapat digulir dan dijangkau dengan mudah oleh pengguna.
+
+4. **Apa peran `GlobalKey<FormState>`, `validator`, dan `validate()` saat tombol Simpan ditekan? Berikan satu contoh nilai yang ditolak oleh validasi dan jelaskan mengapa memilih jenis input atau papan ketik saja belum cukup.**
+
+   * **Peran `GlobalKey<FormState>`**: Berfungsi sebagai referensi pengenal unik global untuk mengakses objek `FormState` dari luar widget pohon `Form`. Kunci ini memungkinkan kita memanggil metode internal state formulir, seperti mengecek validitas dan mereset isian.
+   * **Peran `validator`**: Fungsi logika yang disematkan pada setiap `TextFormField`. Fungsi ini menerima masukan nilai saat ini (`String? value`) dan mengembalikan string pesan kesalahan jika data tidak sesuai aturan, atau mengembalikan `null` jika data valid.
+   * **Peran `validate()`**: Ketika tombol Simpan ditekan, pemanggilan `_formKey.currentState!.validate()` akan mengeksekusi semua fungsi `validator` pada seluruh field form di dalam subtree secara otomatis. Jika ada satu saja field yang menghasilkan string galat, form langsung menandai field tersebut dengan warna merah dan menampilkan pesan error di bawahnya, serta mengembalikan nilai boolean `false`. Dialog ringkasan hanya akan dimunculkan jika `validate()` mengembalikan nilai `true`.
+   * **Contoh Nilai yang Ditolak**: String yang hanya berisi spasi kosong seperti `"   "` atau `"     "`.
+   * **Mengapa jenis input atau papan ketik saja belum cukup?**: Mengatur tipe keyboard (seperti `keyboardType: TextInputType.text`) hanya mengubah tampilan tata letak tombol pada keyboard virtual perangkat pengguna, namun tidak membatasi maupun memeriksa logika isi masukan. Pengguna tetap bisa menekan spasi berulang kali lalu menekan tombol simpan, atau memasukkan teks ratusan karakter yang merusak database. Oleh karena itu, aturan logika validasi manual via `value.trim().isEmpty` dan batas panjang karakter mutlak diperlukan untuk menjamin integritas data sebelum diproses lebih lanjut.
+
+---
+
+### Keterangan Penggunaan AI (AI Disclosure)
+* **Alat AI yang Digunakan**: Antigravity AI (Google DeepMind).
+* **Bagian yang Dibantu**:
+  - Perancangan arsitektur formulir baru `ExperienceFormPage` yang selaras dengan model `Experience` Django web portofolio.
+  - Implementasi pemilih tanggal interaktif `showDatePicker()` dengan validasi urutan kronologis.
+  - Penyusunan draft jawaban reflektif komprehensif mengenai navigasi stack Flutter dan arsitektur form.
+* **Tinjauan & Modifikasi Manual**:
+  - Melakukan verifikasi manual terhadap tipe data pada `models.py` Django (`title`, `job_title`, `category`, `started_at`, `ended_at`, `summary`).
+  - Menyesuaikan penataan tema warna `Colors.indigo` pada `AppBar` dan `DrawerHeader` agar identik di seluruh rute.
+  - Menguji kebersihan kode melalui `flutter analyze` hingga dipastikan nol temuan masalah (*zero issues*).
