@@ -1,6 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:myportofolio_mobile/widgets/left_drawer.dart';
 
+/// Halaman Formulir Tambah Pengalaman Portofolio (Tugas 8).
+/// Mengimplementasikan StatefulWidget, Form, GlobalKey,
+/// validasi isian, showDatePicker(), dan AlertDialog ringkasan data.
 class ExperienceFormPage extends StatefulWidget {
   const ExperienceFormPage({super.key});
 
