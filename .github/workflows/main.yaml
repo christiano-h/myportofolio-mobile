@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Membatalkan run workflow sebelumnya pada branch/PR yang sama jika ada push baru
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Job CI: menjalankan build_runner, dart format, flutter analyze, dan flutter test
+  build:
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v2
+    with:
+      setup: dart run build_runner build --delete-conflicting-outputs
+      coverage_excludes: "**/*.g.dart"
+      min_coverage: 0
+      timeout_minutes: 15
+
+  # Job CD: mengompilasi APK Android release dan mengunggahnya sebagai artefak
+  build_apk:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Generate json_serializable files
+        run: dart run build_runner build --delete-conflicting-outputs
+      - name: Build release APK
+        # Hanya meneruskan --dart-define jika variabel API_BASE_URL tidak kosong
+        # agar nilai kosong tidak menimpa defaultValue di lib/config.dart
+        run: |
+          if [ -n "${{ vars.API_BASE_URL }}" ]; then
+            flutter build apk --release --dart-define=API_BASE_URL=${{ vars.API_BASE_URL }}
+          else
+            flutter build apk --release
+          fi
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
